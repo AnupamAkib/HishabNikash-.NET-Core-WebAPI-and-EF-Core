@@ -1,0 +1,6 @@
+@HishabNikash_HostAddress = http://localhost:5049
+
+GET {{HishabNikash_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
