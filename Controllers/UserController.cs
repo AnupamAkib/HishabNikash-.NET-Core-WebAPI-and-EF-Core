@@ -24,13 +24,13 @@ namespace HishabNikash.Controllers
         {
             if(user is not null)
             {
-                var addedUser = dbContext.Users.Add(user);
-                int affectedRows = await dbContext.SaveChangesAsync();
+                dbContext.Users.Add(user);
+                await dbContext.SaveChangesAsync();
                 return Ok(user);
             }
             else
             {
-                return BadRequest();
+                return BadRequest("User is null");
             }
         }
 

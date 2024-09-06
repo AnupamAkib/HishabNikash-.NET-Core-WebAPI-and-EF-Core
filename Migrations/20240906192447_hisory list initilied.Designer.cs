@@ -4,6 +4,7 @@ using HishabNikash.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HishabNikash.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240906192447_hisory list initilied")]
+    partial class hisorylistinitilied
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,7 +62,7 @@ namespace HishabNikash.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("HishabID")
+                    b.Property<int?>("HishabID")
                         .HasColumnType("int");
 
                     b.Property<string>("HistoryName")
@@ -115,13 +118,9 @@ namespace HishabNikash.Migrations
 
             modelBuilder.Entity("HishabNikash.Models.History", b =>
                 {
-                    b.HasOne("HishabNikash.Models.Hishab", "Hishab")
+                    b.HasOne("HishabNikash.Models.Hishab", null)
                         .WithMany("Histories")
-                        .HasForeignKey("HishabID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Hishab");
+                        .HasForeignKey("HishabID");
                 });
 
             modelBuilder.Entity("HishabNikash.Models.Hishab", b =>

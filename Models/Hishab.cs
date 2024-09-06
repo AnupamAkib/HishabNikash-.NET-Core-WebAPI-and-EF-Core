@@ -12,6 +12,6 @@ namespace HishabNikash.Models
         public string? Name { get; set; }
         public int Amount { get; set; } = 0;
         public string? CardColor { get; set; }
-        public ICollection<History>? Histories { get; set; }
+        public ICollection<History>? Histories { get; set; } = new List<History>();
     }
 }
