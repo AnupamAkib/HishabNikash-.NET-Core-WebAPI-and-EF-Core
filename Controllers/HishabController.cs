@@ -1,5 +1,7 @@
 ﻿using HishabNikash.Context;
 using HishabNikash.Models;
+using HishabNikash.Payloads.Requests;
+using HishabNikash.Payloads.Responses;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,36 +21,97 @@ namespace HishabNikash.Controllers
             this.dbContext = dBContext;
         }
 
+
         [HttpPost]
         [Route("CreateNewHishab")]
-        public async Task<IActionResult> CreateNewHishab(Hishab hishab)
+        public async Task<IActionResult> CreateNewHishab(CreateHishabRequestPayload hishabPayload)
         {
-            if (hishab is not null)
+            if (hishabPayload is null)
             {
-                dbContext.Hishabs.Add(hishab);
-                await dbContext.SaveChangesAsync();
-                return Ok(hishab);
+                return BadRequest("hishab payload is null");
             }
-            else
+
+            var userExist = await dbContext.Users.AnyAsync(u => u.UserID == hishabPayload.UserID);
+
+            if (!userExist)
             {
-                return BadRequest("Hishab is null");
+                return NotFound($"User not found with id {hishabPayload.UserID}");
             }
+
+            var hishab = new Hishab
+            {
+                UserID = hishabPayload.UserID,
+                Name = hishabPayload.Name,
+                Amount = hishabPayload.Amount,
+                CardColor = hishabPayload.CardColor
+            };
+
+            hishab.Histories?.Add(new History
+            {
+                HistoryName = $"Hishab created with initial amount of {hishab.Amount}",
+                HistoryType = "others"
+            });
+
+            dbContext.Hishabs.Add(hishab);
+            await dbContext.SaveChangesAsync();
+
+            var hishabResponsePayload = new HishabResponsePayload
+            {
+                HishabID = hishab.HishabID,
+                UserID = hishab.UserID,
+                Name = hishab.Name,
+                Amount = hishab.Amount,
+                CardColor = hishab.CardColor,
+                TransactionHistories = hishab.Histories != null
+                    ? hishab.Histories.Select(his => new HistoryResponsePayload
+                    {
+                        HistoryName = his.HistoryName,
+                        HistoryType = his.HistoryType,
+                        CreatedDate = his.CreatedDate.ToString()
+                    })
+                    .ToList()
+                    : new List<HistoryResponsePayload>()
+            };
+
+            return Ok(hishabResponsePayload);
         }
+
 
         [HttpGet]
         [Route("GetHishabsByUser")]
-        public async Task<IActionResult> GetHishabsByUser(int UserID)
+        public async Task<IActionResult> GetHishabsByUser(int userID)
         {
             try
             {
-                var userExists = await dbContext.Users.AnyAsync(u => u.UserID == UserID);
+                var userExists = await dbContext.Users.AnyAsync(u => u.UserID == userID);
 
                 if (!userExists)
                 {
-                    return NotFound($"User with ID {UserID} does not exist.");
+                    return NotFound($"User with ID {userID} does not exist.");
                 }
 
-                var hishabs = await dbContext.Hishabs.Where(hishab => hishab.UserID == UserID).Include(h => h.Histories).ToListAsync();
+                var hishabs = await dbContext.Hishabs
+                    .Where(hishab => hishab.UserID == userID)
+                    .Include(h => h.Histories)
+                    .Select(_hishab => new HishabResponsePayload
+                    {
+                        HishabID = _hishab.HishabID,
+                        UserID = _hishab.UserID,
+                        Name = _hishab.Name,
+                        Amount = _hishab.Amount,
+                        CardColor = _hishab.CardColor,
+                        TransactionHistories = _hishab.Histories != null
+                            ? _hishab.Histories.Select(his => new HistoryResponsePayload
+                            {
+                                HistoryName = his.HistoryName,
+                                HistoryType = his.HistoryType,
+                                CreatedDate = his.CreatedDate.ToString()
+                            })
+                            .ToList() 
+                            : new List<HistoryResponsePayload>()
+                    })
+                    .ToListAsync();
+
                 return Ok(hishabs);
             }
             catch (Exception ex)
@@ -63,11 +126,32 @@ namespace HishabNikash.Controllers
         {
             try
             {
-                var hishab = await dbContext.Hishabs.Where(hishab => hishab.HishabID == hishabID).Include(h => h.Histories).ToListAsync();
+                var hishab = await dbContext.Hishabs
+                    .Where(hishab => hishab.HishabID == hishabID)
+                    .Include(h => h.Histories)
+                    .Select(_hishab => new HishabResponsePayload
+                    {
+                        HishabID = _hishab.HishabID,
+                        UserID = _hishab.UserID,
+                        Name = _hishab.Name,
+                        Amount = _hishab.Amount,
+                        CardColor = _hishab.CardColor,
+                        TransactionHistories = _hishab.Histories != null
+                            ? _hishab.Histories.Select(history => new HistoryResponsePayload
+                            {
+                                HistoryName = history.HistoryName,
+                                HistoryType = history.HistoryType,
+                                CreatedDate = history.CreatedDate.ToString()
+                            }).ToList()
+                            : new List<HistoryResponsePayload>()
+                    })
+                    .ToListAsync();
+
                 if(hishab is null || hishab.Count == 0)
                 {
                     return NotFound($"Hishab with ID {hishabID} does not exist.");
                 }
+
                 return Ok(hishab);
             }
             catch (Exception ex)

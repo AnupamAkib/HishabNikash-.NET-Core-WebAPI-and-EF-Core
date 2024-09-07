@@ -1,16 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HishabNikash.Models;
 
-namespace HishabNikash.Models
+namespace HishabNikash.Payloads.Responses
 {
-    public class Hishab
+    public class HishabResponsePayload
     {
-        [Key]
         public int HishabID { get; set; }
         public int UserID { get; set; }
         public string? Name { get; set; }
         public int Amount { get; set; } = 0;
         public string? CardColor { get; set; }
         //may add created date / last update
-        public ICollection<History>? Histories { get; set; } = new List<History>();
+        public List<HistoryResponsePayload>? TransactionHistories { get; set; }
     }
 }
