@@ -48,7 +48,7 @@ namespace HishabNikash.Controllers
 
             hishab.Histories?.Add(new History
             {
-                HistoryName = $"Hishab created with initial amount of {hishab.Amount}",
+                HistoryName = $"Hishab created with initial amount of {hishab.Amount} taka",
                 HistoryType = "others"
             });
 
@@ -162,48 +162,88 @@ namespace HishabNikash.Controllers
 
         [HttpPut]
         [Route("Credit")]
-        public async Task<IActionResult> IncreaseAmount(int hishabID, int value)
+        public async Task<IActionResult> IncreaseAmount(HishabAmountUpdateRequestPayload requestPayload)
         {
-            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == hishabID);
-            if (hishab is not null)
+            if(requestPayload is null)
             {
-                hishab.Amount += value;
-
-                History history = new History();
-                history.HistoryName = $"{value} taka has been credited";
-                history.HistoryType = "credited";
-                hishab.Histories?.Add(history);
-
-                await dbContext.SaveChangesAsync();
-                return Ok(hishab);
+                return BadRequest("UpdateAmountRequestPayload is null");
             }
-            else
+            
+            if(requestPayload.Amount <= 0)
             {
-                return BadRequest($"Hishab not found for hishab id {hishabID}");
+                return BadRequest("Invalid amount. Please enter a positive value");
             }
+
+            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == requestPayload.HishabID);
+
+            if (hishab is null)
+            {
+                return BadRequest($"Hishab not found for hishab id {requestPayload.HishabID}");
+            }
+
+            hishab.Amount += requestPayload.Amount;
+
+            var history = new History
+            {
+                HistoryName = $"{requestPayload.Amount} taka has been credited",
+                HistoryType = "credited"
+            };
+
+            hishab.Histories?.Add(history);
+            await dbContext.SaveChangesAsync();
+
+            var hishabUpdateResponse = new HishabAmountUpdateResponsePayload
+            {
+                HishabID = hishab.HishabID,
+                UserID = hishab.UserID,
+                Name = hishab.Name,
+                UpdatedAmount = hishab.Amount
+            };
+
+            return Ok(hishabUpdateResponse);
         }
 
         [HttpPut]
         [Route("Debit")]
-        public async Task<IActionResult> DecreaseAmount(int hishabID, int value)
+        public async Task<IActionResult> DecreaseAmount(HishabAmountUpdateRequestPayload requestPayload)
         {
-            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == hishabID);
-            if (hishab is not null)
+            if (requestPayload is null)
             {
-                hishab.Amount -= value;
-
-                History history = new History();
-                history.HistoryName = $"{value} taka has been debited";
-                history.HistoryType = "debited";
-                hishab.Histories?.Add(history);
-
-                await dbContext.SaveChangesAsync();
-                return Ok(hishab);
+                return BadRequest("UpdateAmountRequestPayload is null");
             }
-            else
+
+            if (requestPayload.Amount <= 0)
             {
-                return BadRequest($"Hishab not found for hishab id {hishabID}");
+                return BadRequest("Invalid amount. Please enter a positive value");
             }
+
+            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == requestPayload.HishabID);
+
+            if (hishab is null)
+            {
+                return BadRequest($"Hishab not found for hishab id {requestPayload.HishabID}");
+            }
+
+            hishab.Amount -= requestPayload.Amount;
+
+            var history = new History
+            {
+                HistoryName = $"{requestPayload.Amount} taka has been debited",
+                HistoryType = "debited"
+            };
+
+            hishab.Histories?.Add(history);
+            await dbContext.SaveChangesAsync();
+
+            var hishabUpdateResponse = new HishabAmountUpdateResponsePayload
+            {
+                HishabID = hishab.HishabID,
+                UserID = hishab.UserID,
+                Name = hishab.Name,
+                UpdatedAmount = hishab.Amount
+            };
+
+            return Ok(hishabUpdateResponse);
         }
 
         [HttpPut]
