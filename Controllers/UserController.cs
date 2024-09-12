@@ -24,7 +24,7 @@ namespace HishabNikash.Controllers
 
         [HttpPost]
         [Route("Registration")]
-        public async Task<IActionResult> AddUser(RegistrationRequestPayload requestPayload)
+        public async Task<IActionResult> AddUser(RegistrationRequestDTO requestPayload)
         {
             if(requestPayload == null)
             {
@@ -43,7 +43,7 @@ namespace HishabNikash.Controllers
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
 
-            var responsePayload = new UserResponsePayload{
+            var responsePayload = new UserResponseDTO{
                 UserID = user.UserID,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -63,7 +63,7 @@ namespace HishabNikash.Controllers
         public async Task<IActionResult> GetAllUsers()
         {
             var allUsers = await dbContext.Users
-                .Select(user => new UserResponsePayload
+                .Select(user => new UserResponseDTO
                 {
                     UserID = user.UserID,
                     FirstName = user.FirstName,
@@ -85,7 +85,7 @@ namespace HishabNikash.Controllers
         {
             var user = await dbContext.Users
                 .Where(_user => _user.UserID == userID)
-                .Select(u => new UserResponsePayload
+                .Select(u => new UserResponseDTO
                 {
                     UserID = u.UserID,
                     FirstName = u.FirstName,

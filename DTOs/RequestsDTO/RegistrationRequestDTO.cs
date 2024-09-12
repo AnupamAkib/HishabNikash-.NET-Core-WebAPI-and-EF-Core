@@ -2,7 +2,7 @@
 
 namespace HishabNikash.Payloads.Requests
 {
-    public class RegistrationRequestPayload
+    public class RegistrationRequestDTO
     {
         [Required]
         [MaxLength(20, ErrorMessage = "First name is too large")]

@@ -2,7 +2,7 @@
 
 namespace HishabNikash.Payloads.Responses
 {
-    public class HistoryResponsePayload
+    public class HistoryResponseDTO
     {
         public string? HistoryName { get; set; }
         public string? HistoryType { get; set; }

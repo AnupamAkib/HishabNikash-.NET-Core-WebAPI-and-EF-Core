@@ -1,6 +1,6 @@
 ﻿namespace HishabNikash.Payloads.Responses
 {
-    public class HishabAmountUpdateResponsePayload
+    public class HishabAmountUpdateResponseDTO
     {
         public int HishabID { get; set; }
         public int UserID { get; set; }

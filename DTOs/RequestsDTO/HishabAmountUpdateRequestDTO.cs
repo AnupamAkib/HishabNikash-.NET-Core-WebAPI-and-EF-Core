@@ -2,7 +2,7 @@
 
 namespace HishabNikash.Payloads.Requests
 {
-    public class HishabAmountUpdateRequestPayload
+    public class HishabAmountUpdateRequestDTO
     {
         [Required]
         public int HishabID { get; set; }

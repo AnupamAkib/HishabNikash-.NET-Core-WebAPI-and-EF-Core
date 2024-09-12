@@ -1,4 +1,5 @@
 ﻿using HishabNikash.Context;
+using HishabNikash.DTOs.RequestsDTO;
 using HishabNikash.Models;
 using HishabNikash.Payloads.Requests;
 using HishabNikash.Payloads.Responses;
@@ -24,7 +25,7 @@ namespace HishabNikash.Controllers
 
         [HttpPost]
         [Route("CreateNewHishab")]
-        public async Task<IActionResult> CreateNewHishab(CreateHishabRequestPayload hishabPayload)
+        public async Task<IActionResult> CreateNewHishab(CreateHishabRequestDTO hishabPayload)
         {
             if (hishabPayload is null)
             {
@@ -55,7 +56,7 @@ namespace HishabNikash.Controllers
             dbContext.Hishabs.Add(hishab);
             await dbContext.SaveChangesAsync();
 
-            var hishabResponsePayload = new HishabResponsePayload
+            var hishabResponsePayload = new HishabResponseDTO
             {
                 HishabID = hishab.HishabID,
                 UserID = hishab.UserID,
@@ -63,14 +64,14 @@ namespace HishabNikash.Controllers
                 Amount = hishab.Amount,
                 CardColor = hishab.CardColor,
                 TransactionHistories = hishab.Histories != null
-                    ? hishab.Histories.Select(his => new HistoryResponsePayload
+                    ? hishab.Histories.Select(his => new HistoryResponseDTO
                     {
                         HistoryName = his.HistoryName,
                         HistoryType = his.HistoryType,
                         CreatedDate = his.CreatedDate.ToString()
                     })
                     .ToList()
-                    : new List<HistoryResponsePayload>()
+                    : new List<HistoryResponseDTO>()
             };
 
             return Ok(hishabResponsePayload);
@@ -93,7 +94,7 @@ namespace HishabNikash.Controllers
                 var hishabs = await dbContext.Hishabs
                     .Where(hishab => hishab.UserID == userID)
                     .Include(h => h.Histories)
-                    .Select(_hishab => new HishabResponsePayload
+                    .Select(_hishab => new HishabResponseDTO
                     {
                         HishabID = _hishab.HishabID,
                         UserID = _hishab.UserID,
@@ -101,14 +102,14 @@ namespace HishabNikash.Controllers
                         Amount = _hishab.Amount,
                         CardColor = _hishab.CardColor,
                         TransactionHistories = _hishab.Histories != null
-                            ? _hishab.Histories.Select(his => new HistoryResponsePayload
+                            ? _hishab.Histories.Select(his => new HistoryResponseDTO
                             {
                                 HistoryName = his.HistoryName,
                                 HistoryType = his.HistoryType,
                                 CreatedDate = his.CreatedDate.ToString()
                             })
                             .ToList() 
-                            : new List<HistoryResponsePayload>()
+                            : new List<HistoryResponseDTO>()
                     })
                     .ToListAsync();
 
@@ -129,7 +130,7 @@ namespace HishabNikash.Controllers
                 var hishab = await dbContext.Hishabs
                     .Where(hishab => hishab.HishabID == hishabID)
                     .Include(h => h.Histories)
-                    .Select(_hishab => new HishabResponsePayload
+                    .Select(_hishab => new HishabResponseDTO
                     {
                         HishabID = _hishab.HishabID,
                         UserID = _hishab.UserID,
@@ -137,13 +138,13 @@ namespace HishabNikash.Controllers
                         Amount = _hishab.Amount,
                         CardColor = _hishab.CardColor,
                         TransactionHistories = _hishab.Histories != null
-                            ? _hishab.Histories.Select(history => new HistoryResponsePayload
+                            ? _hishab.Histories.Select(history => new HistoryResponseDTO
                             {
                                 HistoryName = history.HistoryName,
                                 HistoryType = history.HistoryType,
                                 CreatedDate = history.CreatedDate.ToString()
                             }).ToList()
-                            : new List<HistoryResponsePayload>()
+                            : new List<HistoryResponseDTO>()
                     })
                     .ToListAsync();
 
@@ -162,7 +163,7 @@ namespace HishabNikash.Controllers
 
         [HttpPut]
         [Route("Credit")]
-        public async Task<IActionResult> IncreaseAmount(HishabAmountUpdateRequestPayload requestPayload)
+        public async Task<IActionResult> IncreaseAmount(HishabAmountUpdateRequestDTO requestPayload)
         {
             if(requestPayload is null)
             {
@@ -192,7 +193,7 @@ namespace HishabNikash.Controllers
             hishab.Histories?.Add(history);
             await dbContext.SaveChangesAsync();
 
-            var hishabUpdateResponse = new HishabAmountUpdateResponsePayload
+            var hishabUpdateResponse = new HishabAmountUpdateResponseDTO
             {
                 HishabID = hishab.HishabID,
                 UserID = hishab.UserID,
@@ -205,11 +206,11 @@ namespace HishabNikash.Controllers
 
         [HttpPut]
         [Route("Debit")]
-        public async Task<IActionResult> DecreaseAmount(HishabAmountUpdateRequestPayload requestPayload)
+        public async Task<IActionResult> DecreaseAmount(HishabAmountUpdateRequestDTO requestPayload)
         {
             if (requestPayload is null)
             {
-                return BadRequest("UpdateAmountRequestPayload is null");
+                return BadRequest("HishabAmountUpdateRequestDTO is null");
             }
 
             if (requestPayload.Amount <= 0)
@@ -235,7 +236,7 @@ namespace HishabNikash.Controllers
             hishab.Histories?.Add(history);
             await dbContext.SaveChangesAsync();
 
-            var hishabUpdateResponse = new HishabAmountUpdateResponsePayload
+            var hishabUpdateResponse = new HishabAmountUpdateResponseDTO
             {
                 HishabID = hishab.HishabID,
                 UserID = hishab.UserID,
@@ -248,15 +249,19 @@ namespace HishabNikash.Controllers
 
         [HttpPut]
         [Route("Edit")]
-        public async Task<IActionResult> EditHishab(int hishabID, string newName, string newColor) //use DTO later
+        public async Task<IActionResult> EditHishab(EditHishabRequestDTO requestDto) //use DTO later
         {
-            var hishab = dbContext.Hishabs.FirstOrDefault(h => h.HishabID == hishabID);
+            var hishab = dbContext.Hishabs.FirstOrDefault(h => h.HishabID == requestDto.HishabID);
             if(hishab is not null)
             {
-                hishab.Name = newName;
-                hishab.CardColor = newColor;
+                hishab.Name = requestDto.UpdatedHishabName;
+                hishab.CardColor = requestDto.UpdatedCardColor;
                 await dbContext.SaveChangesAsync();
-                return Ok("Hishab updated!");
+                return Ok(new
+                {
+                    status = "success",
+                    updatedData = requestDto
+                });
             }
             else
             {

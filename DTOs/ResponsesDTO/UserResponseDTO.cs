@@ -2,7 +2,7 @@
 
 namespace HishabNikash.Payloads.Responses
 {
-    public class UserResponsePayload
+    public class UserResponseDTO
     {
         public int UserID { get; set; }
         public string? FirstName { get; set; }

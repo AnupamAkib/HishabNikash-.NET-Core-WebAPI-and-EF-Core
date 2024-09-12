@@ -2,7 +2,7 @@
 
 namespace HishabNikash.Payloads.Responses
 {
-    public class HishabResponsePayload
+    public class HishabResponseDTO
     {
         public int HishabID { get; set; }
         public int UserID { get; set; }
@@ -10,6 +10,6 @@ namespace HishabNikash.Payloads.Responses
         public int Amount { get; set; } = 0;
         public string? CardColor { get; set; }
         //may add created date / last update
-        public List<HistoryResponsePayload>? TransactionHistories { get; set; }
+        public List<HistoryResponseDTO>? TransactionHistories { get; set; }
     }
 }
