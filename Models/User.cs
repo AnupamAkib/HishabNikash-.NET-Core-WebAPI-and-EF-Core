@@ -11,7 +11,7 @@ namespace HishabNikash.Models
         public string? UserName { get; set; }
         public string? Email { get; set; }
         public string? HashedPassword { get; set; }
-        public string CreatedDate { get; set; } = DateTime.Now.ToString("dd/MM/yyyy | hh:mm tt");
+        public string CreatedDate { get; set; } = DateTime.Now.ToString();
 
         //derived property
         public string FullName => $"{FirstName} {LastName}";

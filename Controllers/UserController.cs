@@ -2,6 +2,7 @@
 using HishabNikash.Models;
 using HishabNikash.Payloads.Requests;
 using HishabNikash.Payloads.Responses;
+using HishabNikash.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,94 +14,34 @@ namespace HishabNikash.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private IConfiguration configuration;
-        private ApplicationDBContext dbContext;
-        public UserController(IConfiguration configuration, ApplicationDBContext dbContext) 
-        { 
-            this.configuration = configuration;
-            this.dbContext = dbContext;
-        }
+        private readonly IUserService userService;
 
+        public UserController(IUserService userService) 
+        {
+            this.userService = userService;
+        }
 
         [HttpPost]
         [Route("Registration")]
-        public async Task<IActionResult> AddUser(RegistrationRequestDTO requestPayload)
+        public async Task<IActionResult> RegisterUserAsync(RegistrationRequestDTO registrationRequestDTO)
         {
-            if(requestPayload == null)
-            {
-                return BadRequest("User payload can't be null");
-            }
-
-            var user = new User
-            {
-                FirstName = requestPayload.FirstName,
-                LastName = requestPayload.LastName,
-                UserName = requestPayload.UserName,
-                Email = requestPayload.Email,
-                HashedPassword = requestPayload.HashedPassword
-            };
-
-            dbContext.Users.Add(user);
-            await dbContext.SaveChangesAsync();
-
-            var responsePayload = new UserResponseDTO{
-                UserID = user.UserID,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                FullName = user.FullName,
-                UserName = user.UserName,
-                Email = user.Email,
-                HashedPassword = user.HashedPassword,
-                CreatedDate = user.CreatedDate
-            };
-
-            return Ok(responsePayload);
+            var userResponseDTO = await userService.RegisterNewUserAsync(registrationRequestDTO);
+            return Ok(userResponseDTO);
         }
-
 
         [HttpGet]
         [Route("GetAllUsers")]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> GetAllUsersAsync()
         {
-            var allUsers = await dbContext.Users
-                .Select(user => new UserResponseDTO
-                {
-                    UserID = user.UserID,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    FullName = user.FullName,
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    HashedPassword = user.HashedPassword,
-                    CreatedDate = user.CreatedDate
-                }).ToListAsync();
-
-            return Ok(allUsers);
+            var users = await userService.GetAllUsersAsync();
+            return Ok(users);
         }
-
 
         [HttpGet]
         [Route("GetUserByID")]
-        public async Task<IActionResult> GetUserByID(int userID)
+        public async Task<IActionResult> GetUserByIDAsync(int userID)
         {
-            var user = await dbContext.Users
-                .Where(_user => _user.UserID == userID)
-                .Select(u => new UserResponseDTO
-                {
-                    UserID = u.UserID,
-                    FirstName = u.FirstName,
-                    LastName = u.LastName,
-                    FullName = u.FullName,
-                    UserName = u.UserName,
-                    Email = u.Email,
-                    HashedPassword = u.HashedPassword,
-                    CreatedDate = u.CreatedDate
-                }).FirstOrDefaultAsync();
-
-            if(user == null)
-            {
-                return NotFound($"User with id {userID} not found!");
-            }
+            var user = await userService.GetUserByIDAsync(userID);
             return Ok(user);
         }
     }
