@@ -17,6 +17,8 @@ namespace HishabNikash.Services
 
         public async Task<UserResponseDTO> RegisterNewUserAsync(RegistrationRequestDTO registrationRequestDTO)
         {
+            //check corner cases like null / already registered / invalid / anything
+
             var registeredUser = await userRepository.AddUserAsync(new User
             {
                 FirstName = registrationRequestDTO.FirstName,

@@ -8,5 +8,6 @@ namespace HishabNikash.Repositories
         Task<User> AddUserAsync(User user);
         Task<List<User>> GetAllUsersAsync();
         Task<User?> GetUserByIDAsync(int userID);
+        Task<bool> IsUserExistAsync(int userID);
     }
 }

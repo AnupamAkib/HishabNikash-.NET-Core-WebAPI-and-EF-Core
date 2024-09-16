@@ -34,5 +34,10 @@ namespace HishabNikash.Repositories
 
             return user;
         }
+
+        public async Task<bool> IsUserExistAsync(int userID)
+        {
+            return await dbContext.Users.AnyAsync(u => u.UserID == userID);
+        }
     }
 }
