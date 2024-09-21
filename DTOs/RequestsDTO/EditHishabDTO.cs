@@ -2,7 +2,7 @@
 
 namespace HishabNikash.DTOs.RequestsDTO
 {
-    public class EditHishabRequestDTO
+    public class EditHishabDTO
     {
         [Required]
         public int HishabID { get; set; }

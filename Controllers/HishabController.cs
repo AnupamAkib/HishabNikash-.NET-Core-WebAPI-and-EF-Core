@@ -1,8 +1,10 @@
 ﻿using HishabNikash.Context;
 using HishabNikash.DTOs.RequestsDTO;
+using HishabNikash.Exceptions;
 using HishabNikash.Models;
 using HishabNikash.Payloads.Requests;
 using HishabNikash.Payloads.Responses;
+using HishabNikash.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,68 +15,34 @@ namespace HishabNikash.Controllers
     [ApiController]
     public class HishabController : ControllerBase
     {
-        private IConfiguration configuration;
-        private ApplicationDBContext dbContext;
+        private readonly IHishabService hishabService;
 
-        public HishabController(IConfiguration configuration, ApplicationDBContext dBContext)
+        public HishabController(IHishabService hishabService)
         {
-            this.configuration = configuration;
-            this.dbContext = dBContext;
+            this.hishabService = hishabService;
         }
-
+        /*
+         * Add exception throwing in User Services/controllers
+         * Check if we really need nullable property (?) in Entries / Solve them accordingly
+         */
 
         [HttpPost]
         [Route("CreateNewHishab")]
-        public async Task<IActionResult> CreateNewHishab(CreateHishabRequestDTO hishabPayload)
+        public async Task<IActionResult> CreateNewHishab(CreateHishabRequestDTO hishabRequestDto)
         {
-            if (hishabPayload is null)
+            try
             {
-                return BadRequest("hishab payload is null");
+                var hishab = await hishabService.CreateNewHishabAsync(hishabRequestDto);
+                return Ok(hishab);
             }
-
-            var userExist = await dbContext.Users.AnyAsync(u => u.UserID == hishabPayload.UserID);
-
-            if (!userExist)
+            catch(CustomException ex) when (ex is NotFoundException || ex is InvalidInputException)
             {
-                return NotFound($"User not found with id {hishabPayload.UserID}");
+                return StatusCode(ex.StatusCode, ex.Message);
             }
-
-            var hishab = new Hishab
+            catch(Exception ex)
             {
-                UserID = hishabPayload.UserID,
-                Name = hishabPayload.Name,
-                Amount = hishabPayload.Amount,
-                CardColor = hishabPayload.CardColor
-            };
-
-            hishab.Histories?.Add(new History
-            {
-                HistoryName = $"Hishab created with initial amount of {hishab.Amount} taka",
-                HistoryType = "others"
-            });
-
-            dbContext.Hishabs.Add(hishab);
-            await dbContext.SaveChangesAsync();
-
-            var hishabResponsePayload = new HishabResponseDTO
-            {
-                HishabID = hishab.HishabID,
-                UserID = hishab.UserID,
-                Name = hishab.Name,
-                Amount = hishab.Amount,
-                CardColor = hishab.CardColor,
-                TransactionHistories = hishab.Histories != null
-                    ? hishab.Histories.Select(his => new HistoryResponseDTO
-                    {
-                        HistoryName = his.HistoryName,
-                        HistoryType = his.HistoryType,
-                        CreatedDate = his.CreatedDate.ToString()
-                    })
-                    .ToList()
-                    : new List<HistoryResponseDTO>()
-            };
-
-            return Ok(hishabResponsePayload);
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -84,36 +52,12 @@ namespace HishabNikash.Controllers
         {
             try
             {
-                var userExists = await dbContext.Users.AnyAsync(u => u.UserID == userID);
-
-                if (!userExists)
-                {
-                    return NotFound($"User with ID {userID} does not exist.");
-                }
-
-                var hishabs = await dbContext.Hishabs
-                    .Where(hishab => hishab.UserID == userID)
-                    .Include(h => h.Histories)
-                    .Select(_hishab => new HishabResponseDTO
-                    {
-                        HishabID = _hishab.HishabID,
-                        UserID = _hishab.UserID,
-                        Name = _hishab.Name,
-                        Amount = _hishab.Amount,
-                        CardColor = _hishab.CardColor,
-                        TransactionHistories = _hishab.Histories != null
-                            ? _hishab.Histories.Select(his => new HistoryResponseDTO
-                            {
-                                HistoryName = his.HistoryName,
-                                HistoryType = his.HistoryType,
-                                CreatedDate = his.CreatedDate.ToString()
-                            })
-                            .ToList() 
-                            : new List<HistoryResponseDTO>()
-                    })
-                    .ToListAsync();
-
-                return Ok(hishabs);
+                var hishab = await hishabService.GetHishabsByUserAsync(userID);
+                return Ok(hishab);
+            }
+            catch(CustomException ex) when (ex is NotFoundException)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
             }
             catch (Exception ex)
             {
@@ -127,33 +71,12 @@ namespace HishabNikash.Controllers
         {
             try
             {
-                var hishab = await dbContext.Hishabs
-                    .Where(hishab => hishab.HishabID == hishabID)
-                    .Include(h => h.Histories)
-                    .Select(_hishab => new HishabResponseDTO
-                    {
-                        HishabID = _hishab.HishabID,
-                        UserID = _hishab.UserID,
-                        Name = _hishab.Name,
-                        Amount = _hishab.Amount,
-                        CardColor = _hishab.CardColor,
-                        TransactionHistories = _hishab.Histories != null
-                            ? _hishab.Histories.Select(history => new HistoryResponseDTO
-                            {
-                                HistoryName = history.HistoryName,
-                                HistoryType = history.HistoryType,
-                                CreatedDate = history.CreatedDate.ToString()
-                            }).ToList()
-                            : new List<HistoryResponseDTO>()
-                    })
-                    .ToListAsync();
-
-                if(hishab is null || hishab.Count == 0)
-                {
-                    return NotFound($"Hishab with ID {hishabID} does not exist.");
-                }
-
+                var hishab = await hishabService.GetHishabByIDAsync(hishabID);
                 return Ok(hishab);
+            }
+            catch (CustomException ex) when (ex is NotFoundException)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
             }
             catch (Exception ex)
             {
@@ -163,109 +86,58 @@ namespace HishabNikash.Controllers
 
         [HttpPut]
         [Route("Credit")]
-        public async Task<IActionResult> IncreaseAmount(HishabAmountUpdateRequestDTO requestPayload)
+        public async Task<IActionResult> IncreaseAmount(HishabAmountUpdateRequestDTO hishabAmountUpdateDto)
         {
-            if(requestPayload is null)
+            try
             {
-                return BadRequest("UpdateAmountRequestPayload is null");
+                var hishab = await hishabService.IncreaseAmountAsync(hishabAmountUpdateDto);
+                return Ok(hishab);
             }
-            
-            if(requestPayload.Amount <= 0)
+            catch (CustomException ex) when (ex is NotFoundException || ex is InvalidInputException)
             {
-                return BadRequest("Invalid amount. Please enter a positive value");
+                return StatusCode(ex.StatusCode, ex.Message);
             }
-
-            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == requestPayload.HishabID);
-
-            if (hishab is null)
+            catch (Exception ex)
             {
-                return BadRequest($"Hishab not found for hishab id {requestPayload.HishabID}");
+                return BadRequest(ex.Message);
             }
-
-            hishab.Amount += requestPayload.Amount;
-
-            var history = new History
-            {
-                HistoryName = $"{requestPayload.Amount} taka has been credited",
-                HistoryType = "credited"
-            };
-
-            hishab.Histories?.Add(history);
-            await dbContext.SaveChangesAsync();
-
-            var hishabUpdateResponse = new HishabAmountUpdateResponseDTO
-            {
-                HishabID = hishab.HishabID,
-                UserID = hishab.UserID,
-                Name = hishab.Name,
-                UpdatedAmount = hishab.Amount
-            };
-
-            return Ok(hishabUpdateResponse);
         }
 
         [HttpPut]
         [Route("Debit")]
-        public async Task<IActionResult> DecreaseAmount(HishabAmountUpdateRequestDTO requestPayload)
+        public async Task<IActionResult> DecreaseAmount(HishabAmountUpdateRequestDTO hishabAmountUpdateDto)
         {
-            if (requestPayload is null)
+            try
             {
-                return BadRequest("HishabAmountUpdateRequestDTO is null");
+                var hishab = await hishabService.DecreaseAmountAsync(hishabAmountUpdateDto);
+                return Ok(hishab);
             }
-
-            if (requestPayload.Amount <= 0)
+            catch (CustomException ex) when (ex is NotFoundException || ex is InvalidInputException)
             {
-                return BadRequest("Invalid amount. Please enter a positive value");
+                return StatusCode(ex.StatusCode, ex.Message);
             }
-
-            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == requestPayload.HishabID);
-
-            if (hishab is null)
+            catch (Exception ex)
             {
-                return BadRequest($"Hishab not found for hishab id {requestPayload.HishabID}");
+                return BadRequest(ex.Message);
             }
-
-            hishab.Amount -= requestPayload.Amount;
-
-            var history = new History
-            {
-                HistoryName = $"{requestPayload.Amount} taka has been debited",
-                HistoryType = "debited"
-            };
-
-            hishab.Histories?.Add(history);
-            await dbContext.SaveChangesAsync();
-
-            var hishabUpdateResponse = new HishabAmountUpdateResponseDTO
-            {
-                HishabID = hishab.HishabID,
-                UserID = hishab.UserID,
-                Name = hishab.Name,
-                UpdatedAmount = hishab.Amount
-            };
-
-            return Ok(hishabUpdateResponse);
         }
 
         [HttpPut]
         [Route("Edit")]
-        public async Task<IActionResult> EditHishab(EditHishabRequestDTO requestDto) //use DTO later
+        public async Task<IActionResult> EditHishab(EditHishabDTO editHishabDto) //use DTO later
         {
-            var hishab = dbContext.Hishabs.FirstOrDefault(h => h.HishabID == requestDto.HishabID);
-            if(hishab is not null)
+            try
             {
-                hishab.Name = requestDto.UpdatedHishabName;
-                hishab.CardColor = requestDto.UpdatedCardColor;
-                await dbContext.SaveChangesAsync();
-                return Ok(new
-                {
-                    status = "success",
-                    updatedData = requestDto
-                });
+                var updatedHishabDto = await hishabService.EditHishabAsync(editHishabDto);
+                return Ok(updatedHishabDto);
             }
-            else
+            catch (CustomException ex) when (ex is NotFoundException || ex is InvalidInputException)
             {
-                return BadRequest("something went wrong");
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
 
@@ -273,16 +145,21 @@ namespace HishabNikash.Controllers
         [Route("Delete")]
         public async Task<IActionResult> DeleteHishab(int hishabID)
         {
-            var hishab = await dbContext.Hishabs.FirstOrDefaultAsync(h => h.HishabID == hishabID);
-            if (hishab is not null)
+            bool isDeleted = await hishabService.DeleteHishabAsync(hishabID);
+
+            if (isDeleted)
             {
-                dbContext.Hishabs.Remove(hishab);
-                await dbContext.SaveChangesAsync();
-                return Ok($"Hishab with ID {hishabID} has been deleted.");
+                return Ok(new
+                {
+                    message = $"Hishab deleted with ID {hishabID}"
+                });
             }
             else
             {
-                return BadRequest("Hishab not found");
+                return BadRequest(new
+                {
+                    message = "Unsuccessful! Hishab can't be deleted or not found!"
+                });
             }
         }
     }

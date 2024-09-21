@@ -5,8 +5,8 @@ namespace HishabNikash.Repositories
     public interface IHishabRepository
     {
         Task<Hishab> CreateNewHishabAsync(Hishab hishab);
-        Task<List<Hishab>> GetHishabsByUserAsync(int userID);
-        Task<Hishab> GetHishabByIDAsync(int hishabID);
+        Task<List<Hishab>?> GetHishabsByUserAsync(int userID);
+        Task<Hishab?> GetHishabByIDAsync(int hishabID);
         Task<Hishab?> IncreaseAmountAsync(int hishabID, int amount);
         Task<Hishab?> DecreaseAmountAsync(int hishabID, int amount);
         Task<Hishab?> EditHishabAsync(int hishabID, string updatedHishabName, string updatedCardColor);

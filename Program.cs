@@ -26,6 +26,8 @@ builder.Services.AddSwaggerGen();
 // Register services and repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IHishabRepository, HishabRepository>();
+builder.Services.AddScoped<IHishabService, HishabService>();
 
 var app = builder.Build();
 
