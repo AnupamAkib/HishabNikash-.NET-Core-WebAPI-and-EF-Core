@@ -1,8 +1,8 @@
-﻿using HishabNikash.Models;
+﻿using HishabNikash.Exceptions;
+using HishabNikash.Models;
 using HishabNikash.Payloads.Requests;
 using HishabNikash.Payloads.Responses;
 using HishabNikash.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace HishabNikash.Services
 {
@@ -17,7 +17,19 @@ namespace HishabNikash.Services
 
         public async Task<UserResponseDTO> RegisterNewUserAsync(RegistrationRequestDTO registrationRequestDTO)
         {
-            //check corner cases like null / already registered / invalid / anything
+            if(registrationRequestDTO is null)
+            {
+                throw new InvalidInputException("Input format is not valid");
+            }
+
+            bool userAlreadyExist = await userRepository.IsUserAlreadyRegistered(
+                registrationRequestDTO.UserName, 
+                registrationRequestDTO.Email);
+
+            if(userAlreadyExist)
+            {
+                throw new AlreadyExistException("User already exist with provided username or email");
+            }
 
             var registeredUser = await userRepository.AddUserAsync(new User
             {
@@ -66,7 +78,7 @@ namespace HishabNikash.Services
 
             if(user is null)
             {
-                return null;
+                throw new NotFoundException($"User doesn't exist with ID {userID}");
             }
 
             var userResponseDTO = new UserResponseDTO

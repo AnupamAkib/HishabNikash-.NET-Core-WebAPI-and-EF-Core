@@ -1,12 +1,10 @@
 ﻿using HishabNikash.Context;
+using HishabNikash.Exceptions;
 using HishabNikash.Models;
 using HishabNikash.Payloads.Requests;
 using HishabNikash.Payloads.Responses;
 using HishabNikash.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace HishabNikash.Controllers
 {
@@ -25,8 +23,19 @@ namespace HishabNikash.Controllers
         [Route("Registration")]
         public async Task<IActionResult> RegisterUserAsync(RegistrationRequestDTO registrationRequestDTO)
         {
-            var userResponseDTO = await userService.RegisterNewUserAsync(registrationRequestDTO);
-            return Ok(userResponseDTO);
+            try
+            {
+                var userResponseDTO = await userService.RegisterNewUserAsync(registrationRequestDTO);
+                return Ok(userResponseDTO);
+            }
+            catch(CustomException ex) when (ex is InvalidInputException || ex is AlreadyExistException)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet]
@@ -41,8 +50,19 @@ namespace HishabNikash.Controllers
         [Route("GetUserByID")]
         public async Task<IActionResult> GetUserByIDAsync(int userID)
         {
-            var user = await userService.GetUserByIDAsync(userID);
-            return Ok(user);
+            try
+            {
+                var user = await userService.GetUserByIDAsync(userID);
+                return Ok(user);
+            }
+            catch (CustomException ex) when (ex is NotFoundException)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

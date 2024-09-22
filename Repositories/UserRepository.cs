@@ -35,6 +35,13 @@ namespace HishabNikash.Repositories
             return user;
         }
 
+        public async Task<bool> IsUserAlreadyRegistered(string username, string email)
+        {
+            bool isExistUsername = await dbContext.Users.AnyAsync(u => u.UserName == username);
+            bool isExistEmail = await dbContext.Users.AnyAsync(u => u.Email == email);
+            return (isExistUsername || isExistEmail);
+        }
+
         public async Task<bool> IsUserExistAsync(int userID)
         {
             return await dbContext.Users.AnyAsync(u => u.UserID == userID);
