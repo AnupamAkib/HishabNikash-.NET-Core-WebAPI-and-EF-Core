@@ -1,4 +1,4 @@
 /.vs
 /.idea
-/HishabNikash/bin
-/HishabNikash/obj
+**/bin/
+**/obj/
