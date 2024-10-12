@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=EdSQLonDocker2022!
+    restart: always
+    networks:
+      - hishab-network
+
+  hishabnikash:
+    depends_on:
+      - db
+    image: ${DOCKER_REGISTRY-}hishabnikash:runtime
+    ports:
+      - "8080:5000"  # HTTP port
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000  # Ensure only HTTP is configured
+    build:
+      context: .
+    networks:
+      - hishab-network
+
+networks:
+  hishab-network:
+    driver: bridge

@@ -15,7 +15,7 @@ namespace Repository
             Create(user);
         }
 
-        public async Task<List<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             var allUsers = await FindAll().ToListAsync();
             

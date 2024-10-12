@@ -1,15 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HishabNikash.Models;
+using Microsoft.AspNetCore.Mvc;
+using Service.Contracts;
 
 namespace HishabNikash.Presentation.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult Message()
+        private readonly IServiceManager serviceManager;
+
+        public UserController(IServiceManager serviceManager)
         {
-            return Ok(new { msg = "working User"});
+            this.serviceManager = serviceManager;
+        }
+
+        [HttpPost]
+        [Route("AddUser")]
+        public IActionResult AddUser(User user)
+        {
+            serviceManager.UserService.AddUser(user);
+            return Ok(user);
+        }
+
+        [HttpGet]
+        [Route("GetAllUsers")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await serviceManager.UserService.GetAllUsersAsync();
+            return Ok(users);
         }
     }
 }
