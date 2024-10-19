@@ -10,9 +10,9 @@ namespace Repository
         {
         }
 
-        public void AddUser(User user)
+        public async Task<User> AddUser(User user)
         {
-            Create(user);
+            return await Create(user);
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()

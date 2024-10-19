@@ -15,24 +15,28 @@ namespace Repository
         {
         }
 
-        public void CreateNewHishab(Hishab hishab)
+        public async Task<Hishab> CreateNewHishab(Hishab hishab)
         {
-            Create(hishab);
+            hishab.Histories?.Add(new History
+            {
+                HistoryName = $"Hishab created with name '{hishab.Name}'",
+                HistoryType = "others"
+            });
+            return await Create(hishab);
         }
 
-        public bool DeleteHishab(int hishabID)
+        public async Task<bool> DeleteHishab(int hishabID)
         {
             var hishab = FindByCondition(h => h.ID == hishabID).FirstOrDefault();
 
             if (hishab is not null)
             {
-                Delete(hishab);
-                return true;
+                return await Delete(hishab);
             }
             return false;
         }
 
-        public Hishab? EditHishab(int hishabID, string updatedHishabName, string updatedCardColor)
+        public async Task<Hishab?> EditHishab(int hishabID, string updatedHishabName, string updatedCardColor)
         {
             var hishab = FindByCondition(h => h.ID == hishabID).FirstOrDefault();
 
@@ -52,19 +56,21 @@ namespace Repository
             hishab.CardColor = updatedCardColor;
             hishab.Histories?.Add(history);
 
-            Update(hishab);
+            await Update(hishab);
 
             return hishab;
         }
 
         public async Task<Hishab?> GetHishabByIDAsync(int hishabID)
         {
-            return await FindByCondition(h => h.ID == hishabID).FirstOrDefaultAsync();
+            return await FindByCondition(h => h.ID == hishabID)
+                .Include(h => h.Histories.OrderByDescending(his => his.CreatedDate))
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<List<Hishab>?> GetHishabsByUserAsync(int userID)
+        public async Task<IEnumerable<Hishab>?> GetHishabsByUserAsync(int userID)
         {
-            return await FindByCondition(u => u.ID == userID).ToListAsync();
+            return await FindByCondition(u => u.UserID == userID).ToListAsync();
         }
 
         public bool IncreaseAmount(int hishabID, int amount)

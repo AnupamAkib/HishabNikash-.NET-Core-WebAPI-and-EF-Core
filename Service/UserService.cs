@@ -13,16 +13,23 @@ namespace Service
             this.repositoryManager = repositoryManager;
         }
 
-        public void AddUser(User user)
+        public async Task<User> AddUser(User user)
         {
-            repositoryManager.User.AddUser(user);
+            var _user = await repositoryManager.User.AddUser(user);
             repositoryManager.Save();
+            return _user;
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             var users = await repositoryManager.User.GetAllUsersAsync();
             return users;
+        }
+
+        public async Task<User?> GetUserByIdAsync(int userId)
+        {
+            var user = await repositoryManager.User.GetUserByIDAsync(userId);
+            return user;
         }
     }
 }

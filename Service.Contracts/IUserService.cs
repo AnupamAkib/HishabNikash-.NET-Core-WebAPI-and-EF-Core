@@ -9,7 +9,8 @@ namespace Service.Contracts
 {
     public interface IUserService
     {
-        void AddUser(User user);
+        Task<User> AddUser(User user);
         Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<User?> GetUserByIdAsync(int userId);
     }
 }

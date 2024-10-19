@@ -13,11 +13,23 @@ namespace Contracts
             this.repositoryContext = repositoryContext;
         }
 
-        public void Create(T entity) => repositoryContext.Set<T>().Add(entity);
+        public async Task<T> Create(T entity)
+        {
+            await repositoryContext.Set<T>().AddAsync(entity);
+            return entity;
+        }
 
-        public void Delete(T entity) => repositoryContext.Set<T>().Remove(entity);
+        public Task<bool> Delete(T entity)
+        {
+            repositoryContext.Set<T>().Remove(entity);
+            return Task.FromResult(true);
+        }
 
-        public void Update(T entity) => repositoryContext.Set<T>().Update(entity);
+        public Task<T> Update(T entity)
+        {
+            repositoryContext.Set<T>().Update(entity);
+            return Task.FromResult(entity);
+        }
 
         public IQueryable<T> FindAll()
         {

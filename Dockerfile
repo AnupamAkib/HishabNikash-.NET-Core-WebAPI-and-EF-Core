@@ -2,15 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 as build-image
 WORKDIR /home/app
 
-# Copy solution and project files
-COPY ./*.sln ./
-COPY ./*/*.csproj ./
-RUN for file in $(ls *.csproj); do mkdir -p ./${file%.*}/ && mv $file ./${file%.*}/; done
+# Copy everything and restore dependencies
+COPY . ./
 RUN dotnet restore
 
-# Copy all files and publish the application
-COPY . .
-RUN dotnet publish ./HishabNikash/HishabNikash.csproj -o /publish/
+# Publish the application
+RUN dotnet publish ./HishabNikash/HishabNikash.csproj -c Release -o /publish/
 
 # Stage 2: Run the application
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
@@ -19,7 +16,7 @@ WORKDIR /publish
 # Copy the published app from the build stage
 COPY --from=build-image /publish .
 
-# Copy the SSL certificate (you should ensure this path exists locally)
+# Copy the SSL certificate (ensure this path exists locally)
 COPY ./certs/aspnetapp.pfx /https/aspnetapp.pfx
 
 # Define URL for Kestrel (both HTTP and HTTPS)
