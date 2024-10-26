@@ -70,7 +70,9 @@ namespace Repository
 
         public async Task<IEnumerable<Hishab>?> GetHishabsByUserAsync(int userID)
         {
-            return await FindByCondition(u => u.UserID == userID).ToListAsync();
+            return await FindByCondition(u => u.UserID == userID)
+                .Include(h => h.Histories.OrderByDescending(his => his.CreatedDate))
+                .ToListAsync();
         }
 
         public bool IncreaseAmount(int hishabID, int amount)
